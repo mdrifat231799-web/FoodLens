@@ -1560,11 +1560,8 @@ function updateScanStatusUI(
 async function analyzeFood() {
 
   if (isAnalyzing) {
-
     return;
-
   }
-
 
   if (!selectedImageFile) {
 
@@ -1573,51 +1570,38 @@ async function analyzeFood() {
     );
 
     return;
-
   }
 
-
   const button =
-    document.getElementById(
-      "analyzeBtn"
-    );
+    document.getElementById("analyzeBtn");
 
-
-  isAnalyzing =
-    true;
-
+  isAnalyzing = true;
 
   if (button) {
 
-    button.disabled =
-      true;
-
+    button.disabled = true;
 
     button.textContent =
       "🤖 AI বিশ্লেষণ করছে...";
 
   }
 
-
   try {
 
-    /*
-      STEP 1:
-      Check server-side scan status.
-    */
+    /* =====================================================
+       STEP 1 — CHECK SERVER SCAN STATUS
+    ===================================================== */
 
     const statusResponse =
       await fetch(
         `${API_BASE_URL}/scan-status`,
         {
-          method:
-            "GET",
+          method: "GET",
 
           headers:
             getAPIHeaders(),
 
-          cache:
-            "no-store"
+          cache: "no-store"
         }
       );
 
@@ -1644,36 +1628,32 @@ async function analyzeFood() {
     );
 
 
-    /*
-      STEP 2:
-      Determine current plan.
-
-      IMPORTANT:
-      Owner = Unlimited.
-
-      তাই Owner-এর ক্ষেত্রে
-      remaining 0 হলেও scan block হবে না।
-    */
+    /* =====================================================
+       STEP 2 — DETERMINE PLAN
+    ===================================================== */
 
     const currentPlan =
       String(
-        status.plan ||
-        "free"
-      ).toLowerCase();
+        status.plan || "free"
+      )
+      .trim()
+      .toLowerCase();
 
 
     const isOwner =
-      currentPlan ===
-      "owner";
+      currentPlan === "owner";
 
 
-    /*
-      STEP 3:
-      Check scan availability.
+    /* =====================================================
+       STEP 3 — CHECK DAILY LIMIT
+       
+       IMPORTANT:
+       OWNER = UNLIMITED
 
-      Owner হলে এই limit check
-      সম্পূর্ণভাবে skip হবে।
-    */
+       Owner-এর remaining যদি 0, null,
+       undefined বা অন্য কিছু হয় তবুও
+       এখানে scan block হবে না।
+    ===================================================== */
 
     if (!isOwner) {
 
@@ -1695,16 +1675,31 @@ async function analyzeFood() {
         noScanRemaining
       ) {
 
-        showDailyLimitPopup(
+        const defaultLimit =
+          currentPlan === "premium"
+            ? 50
+            : FREE_SCAN_LIMIT;
+
+
+        const serverLimit =
           Number(
             status.limit
-          ) ||
-          (
-            currentPlan ===
-            "premium"
-              ? 50
-              : FREE_SCAN_LIMIT
-          ),
+          );
+
+
+        const limit =
+          Number.isFinite(
+            serverLimit
+          ) &&
+          serverLimit > 0
+
+            ? serverLimit
+
+            : defaultLimit;
+
+
+        showDailyLimitPopup(
+          limit,
           currentPlan
         );
 
@@ -1716,10 +1711,9 @@ async function analyzeFood() {
     }
 
 
-    /*
-      STEP 4:
-      Prepare image.
-    */
+    /* =====================================================
+       STEP 4 — PREPARE IMAGE
+    ===================================================== */
 
     const formData =
       new FormData();
@@ -1731,17 +1725,15 @@ async function analyzeFood() {
     );
 
 
-    /*
-      STEP 5:
-      Send image to backend.
-    */
+    /* =====================================================
+       STEP 5 — SEND IMAGE TO BACKEND
+    ===================================================== */
 
     const response =
       await fetch(
         `${API_BASE_URL}/analyze-food`,
         {
-          method:
-            "POST",
+          method: "POST",
 
           headers:
             getAPIHeaders(),
@@ -1769,29 +1761,25 @@ async function analyzeFood() {
     }
 
 
-    /*
-      DAILY LIMIT
-
-      Owner-এর ক্ষেত্রে backend থেকে
-      429 আসার কথা নয়।
-
-      তারপরও যদি আসে, Owner-কে
-      Free limit popup দেখানো হবে না।
-    */
+    /* =====================================================
+       STEP 6 — DAILY LIMIT RESPONSE
+       
+       Owner হলে 429 popup দেখানো হবে না।
+    ===================================================== */
 
     if (
-      response.status ===
-      429
+      response.status === 429
     ) {
 
       if (isOwner) {
 
         showToast(
-          "⚠️ Owner Access আছে, কিন্তু server scan limit response দিয়েছে। Backend status check করুন।"
+          "⚠️ Owner Access আছে, কিন্তু server limit response দিয়েছে। Backend configuration check করুন।"
         );
 
 
         await loadScanStatus();
+
 
         return;
 
@@ -1803,58 +1791,85 @@ async function analyzeFood() {
         data.detail;
 
 
+      const defaultLimit =
+        currentPlan === "premium"
+          ? 50
+          : FREE_SCAN_LIMIT;
+
+
+      const detailLimit =
+        detail &&
+        typeof detail === "object"
+          ? Number(detail.limit)
+          : NaN;
+
+
       const limit =
+        Number.isFinite(
+          detailLimit
+        ) &&
+        detailLimit > 0
+
+          ? detailLimit
+
+          : defaultLimit;
+
+
+      const detailPlan =
         detail &&
-        typeof detail ===
-          "object"
-
-          ? Number(
-              detail.limit
-            ) ||
-            (
-              currentPlan ===
-              "premium"
-                ? 50
-                : FREE_SCAN_LIMIT
-            )
-
-          : (
-              currentPlan ===
-              "premium"
-                ? 50
-                : FREE_SCAN_LIMIT
-            );
-
-
-      const popupPlan =
-        detail &&
-        typeof detail ===
-          "object" &&
+        typeof detail === "object" &&
         detail.plan
 
           ? String(
               detail.plan
-            ).toLowerCase()
+            )
+            .trim()
+            .toLowerCase()
 
           : currentPlan;
 
 
+      /*
+        Safety:
+        Backend যদি কোনোভাবে owner plan-এর
+        429 response দেয়, owner popup
+        কখনো দেখাব না।
+      */
+
+      if (
+        detailPlan === "owner"
+      ) {
+
+        showToast(
+          "⚠️ Owner Access active আছে। Server-এর limit response check করুন।"
+        );
+
+
+        await loadScanStatus();
+
+
+        return;
+
+      }
+
+
       showDailyLimitPopup(
         limit,
-        popupPlan
+        detailPlan
       );
 
 
       await loadScanStatus();
+
 
       return;
 
     }
 
 
-    /*
-      BACKEND ERROR
-    */
+    /* =====================================================
+       STEP 7 — BACKEND ERROR
+    ===================================================== */
 
     if (!response.ok) {
 
@@ -1894,9 +1909,9 @@ async function analyzeFood() {
     }
 
 
-    /*
-      VALIDATE AI RESPONSE
-    */
+    /* =====================================================
+       STEP 8 — VALIDATE AI RESPONSE
+    ===================================================== */
 
     if (
       !data ||
@@ -1910,27 +1925,27 @@ async function analyzeFood() {
     }
 
 
-    /*
-      DISPLAY RESULT
-    */
+    /* =====================================================
+       STEP 9 — DISPLAY RESULT
+    ===================================================== */
 
     displayAnalysisResult(
       data
     );
 
 
-    /*
-      SAVE HISTORY
-    */
+    /* =====================================================
+       STEP 10 — SAVE HISTORY
+    ===================================================== */
 
     await saveAIScan(
       data
     );
 
 
-    /*
-      UPDATE SCAN STATUS
-    */
+    /* =====================================================
+       STEP 11 — UPDATE SCAN STATUS
+    ===================================================== */
 
     if (
       data.scan &&
@@ -1966,12 +1981,8 @@ async function analyzeFood() {
     } else {
 
       /*
-        Owner-এর ক্ষেত্রে backend
-        status আবার load করব।
-
-        এতে UI-তে সবসময়
-        👑 Owner — Unlimited
-        দেখা থাকবে।
+        Owner হলে backend থেকে
+        fresh status আনব।
       */
 
       await loadScanStatus();
@@ -1979,9 +1990,9 @@ async function analyzeFood() {
     }
 
 
-    /*
-      SUCCESS MESSAGE
-    */
+    /* =====================================================
+       STEP 12 — SUCCESS
+    ===================================================== */
 
     showToast(
       isOwner
@@ -2035,7 +2046,6 @@ async function analyzeFood() {
   }
 
 }
-
 
 /* =========================================================
    DISPLAY AI RESULT
@@ -3970,27 +3980,38 @@ function showDailyLimitPopup(
 ) {
 
   /*
-    IMPORTANT:
-    Owner-এর জন্য কখনো daily limit popup
-    দেখানো যাবে না।
+    ========================================================
+    OWNER = UNLIMITED
+
+    কোনো অবস্থাতেই Owner-এর জন্য
+    daily limit popup দেখানো যাবে না।
+    ========================================================
   */
 
   const currentPlan =
     String(
-      plan ||
-      "free"
-    ).toLowerCase();
+      plan || "free"
+    )
+    .trim()
+    .toLowerCase();
 
 
   if (
-    currentPlan ===
-    "owner"
+    currentPlan === "owner"
   ) {
+
+    console.log(
+      "FoodLens: Owner plan detected. Limit popup blocked."
+    );
 
     return;
 
   }
 
+
+  /* =====================================================
+     REMOVE EXISTING POPUP
+  ===================================================== */
 
   const existing =
     document.getElementById(
@@ -4004,6 +4025,10 @@ function showDailyLimitPopup(
 
   }
 
+
+  /* =====================================================
+     CREATE POPUP
+  ===================================================== */
 
   const overlay =
     document.createElement(
@@ -4019,14 +4044,12 @@ function showDailyLimitPopup(
     "foodlens-popup-overlay";
 
 
-  /*
-    Premium হলে Premium wording,
-    Free হলে Free wording।
-  */
+  /* =====================================================
+     PLAN INFORMATION
+  ===================================================== */
 
   const isPremium =
-    currentPlan ===
-    "premium";
+    currentPlan === "premium";
 
 
   const planName =
@@ -4035,14 +4058,30 @@ function showDailyLimitPopup(
       : "Free";
 
 
-  const tomorrowLimit =
-    Number(limit) ||
-    (
-      isPremium
-        ? 50
-        : FREE_SCAN_LIMIT
-    );
+  const fallbackLimit =
+    isPremium
+      ? 50
+      : FREE_SCAN_LIMIT;
 
+
+  const numericLimit =
+    Number(limit);
+
+
+  const finalLimit =
+    Number.isFinite(
+      numericLimit
+    ) &&
+    numericLimit > 0
+
+      ? numericLimit
+
+      : fallbackLimit;
+
+
+  /* =====================================================
+     POPUP HTML
+  ===================================================== */
 
   overlay.innerHTML = `
 
@@ -4062,7 +4101,7 @@ function showDailyLimitPopup(
 
         আপনি আজকের
         ${escapeHTML(
-          String(tomorrowLimit)
+          String(finalLimit)
         )}টি
         ${planName}
         AI Scan
@@ -4072,7 +4111,7 @@ function showDailyLimitPopup(
 
         আগামীকাল আবার
         ${escapeHTML(
-          String(tomorrowLimit)
+          String(finalLimit)
         )}টি
         ${planName}
         Scan
@@ -4083,6 +4122,7 @@ function showDailyLimitPopup(
 
       ${
         isPremium
+
           ? `
 
             <div class="foodlens-popup-info">
@@ -4092,6 +4132,7 @@ function showDailyLimitPopup(
             </div>
 
           `
+
           : `
 
             <div class="foodlens-popup-info">
@@ -4107,6 +4148,7 @@ function showDailyLimitPopup(
 
       ${
         isPremium
+
           ? ""
 
           : `
@@ -4141,6 +4183,10 @@ function showDailyLimitPopup(
   );
 
 
+  /* =====================================================
+     CLOSE BUTTON
+  ===================================================== */
+
   const closeButton =
     document.getElementById(
       "foodLensCloseLimitButton"
@@ -4160,6 +4206,10 @@ function showDailyLimitPopup(
 
   }
 
+
+  /* =====================================================
+     PREMIUM BUTTON
+  ===================================================== */
 
   const upgradeButton =
     document.getElementById(
@@ -4183,6 +4233,10 @@ function showDailyLimitPopup(
   }
 
 
+  /* =====================================================
+     CLICK OUTSIDE TO CLOSE
+  ===================================================== */
+
   overlay.addEventListener(
     "click",
     event => {
@@ -4200,7 +4254,6 @@ function showDailyLimitPopup(
   );
 
 }
-
 
 /* =========================================================
    PREMIUM INFO
