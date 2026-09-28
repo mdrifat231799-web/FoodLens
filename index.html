@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>FoodLens — Smart Food Scanner</title>
+
+  <meta
+    name="description"
+    content="FoodLens — AI দিয়ে খাবারের ছবি বিশ্লেষণ করে nutrition সম্পর্কে জানুন।"
+  >
+
+  <meta
+    name="theme-color"
+    content="#07110e"
+  >
+
+  <meta
+    name="color-scheme"
+    content="dark"
+  >
+
+  <!-- Fonts -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Main CSS -->
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+       APP LOCK
+  ====================================================== -->
+
+  <div
+    id="lockScreen"
+    class="lock-screen"
+  >
+
+    <div class="lock-card">
+
+
+      <!-- LOGO -->
+
+      <div class="lock-icon">
+        🥗
+      </div>
+
+
+      <h1>
+        FoodLens
+      </h1>
+
+
+      <p class="lock-subtitle">
+        আপনার Personal Nutrition Companion
+      </p>
+
+
+
+      <!-- =================================================
+           CREATE PASSWORD
+      ================================================== -->
+
+      <div id="setupPasswordArea">
+
+        <p class="lock-info">
+          FoodLens নিরাপদ রাখতে একটি password তৈরি করুন।
+        </p>
+
+
+        <input
+          type="password"
+          id="newPassword"
+          class="lock-input"
+          placeholder="নতুন password"
+          autocomplete="new-password"
+        >
+
+
+        <input
+          type="password"
+          id="confirmPassword"
+          class="lock-input"
+          placeholder="আবার password দিন"
+          autocomplete="new-password"
+        >
+
+
+        <button
+          type="button"
+          class="primary-btn full-btn"
+          onclick="createPassword()"
+        >
+          🔐 Password তৈরি করুন
+        </button>
+
+      </div>
+
+
+
+      <!-- =================================================
+           LOGIN
+      ================================================== -->
+
+      <div
+        id="loginPasswordArea"
+        class="hidden"
+      >
+
+        <p class="lock-info">
+          FoodLens ব্যবহার করতে আপনার password দিন।
+        </p>
+
+
+        <input
+          type="password"
+          id="loginPassword"
+          class="lock-input"
+          placeholder="আপনার password"
+          autocomplete="current-password"
+        >
+
+
+        <button
+          type="button"
+          class="primary-btn full-btn"
+          onclick="unlockApp()"
+        >
+          🔓 FoodLens খুলুন
+        </button>
+
+      </div>
+
+
+      <!-- LOCK MESSAGE -->
+
+      <p
+        id="lockMessage"
+        class="lock-message"
+        aria-live="polite"
+      ></p>
+
+
+      <!-- OWNER ACCESS -->
+
+      <button
+        type="button"
+        class="text-btn owner-access-btn"
+        onclick="activateOwnerAccess()"
+      >
+        👑 Owner Access
+      </button>
+
+
+      <p class="lock-footer-note">
+        FoodLens-এর তথ্য এই device-এ সংরক্ষিত থাকে।
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       MAIN APP
+  ====================================================== -->
+
+  <div
+    id="app"
+    class="app hidden"
+  >
+
+
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
+
+    <aside class="sidebar">
+
+
+      <!-- BRAND -->
+
+      <div class="brand">
+
+        <div class="brand-icon">
+          🥗
+        </div>
+
+
+        <div>
+
+          <h2>
+            FoodLens
+          </h2>
+
+          <span>
+            Smart Nutrition
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- NAVIGATION -->
+
+      <nav
+        class="navigation"
+        aria-label="Main navigation"
+      >
+
+
+        <button
+          type="button"
+          class="nav-item active"
+          data-page="dashboard"
+          onclick="showPage('dashboard')"
+        >
+
+          <span>
+            ⌂
+          </span>
+
+          Dashboard
+
+        </button>
+
+
+
+        <button
+          type="button"
+          class="nav-item"
+          data-page="scanner"
+          onclick="showPage('scanner')"
+        >
+
+          <span>
+            📷
+          </span>
+
+          Food Scanner
+
+        </button>
+
+
+
+        <button
+          type="button"
+          class="nav-item"
+          data-page="health"
+          onclick="showPage('health')"
+        >
+
+          <span>
+            ♥
+          </span>
+
+          My Health
+
+        </button>
+
+
+
+        <button
+          type="button"
+          class="nav-item"
+          data-page="history"
+          onclick="showPage('history')"
+        >
+
+          <span>
+            ◷
+          </span>
+
+          Scan History
+
+        </button>
+
+
+      </nav>
+
+
+
+      <!-- SIDEBAR BOTTOM -->
+
+      <div class="sidebar-bottom">
+
+
+        <div class="mini-tip">
+
+          <span>
+            💡
+          </span>
+
+
+          <div>
+
+            <strong>
+              Food Tip
+            </strong>
+
+            <p>
+              প্রতিদিন কী খাচ্ছেন track করলে
+              আপনার nutrition আরও ভালোভাবে বুঝতে পারবেন।
+            </p>
+
+          </div>
+
+        </div>
+
+
+
+        <button
+          type="button"
+          class="logout-btn"
+          onclick="lockApp()"
+        >
+          🔒 App Lock করুন
+        </button>
+
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- ===================================================
+         MAIN CONTENT
+    ==================================================== -->
+
+    <main class="main-content">
+
+
+      <!-- =================================================
+           MOBILE HEADER
+      ================================================== -->
+
+      <header class="mobile-header">
+
+
+        <div class="brand">
+
+          <div class="brand-icon">
+            🥗
+          </div>
+
+
+          <div>
+
+            <h2>
+              FoodLens
+            </h2>
+
+            <span>
+              Smart Nutrition
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          onclick="toggleSidebar()"
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+
+      </header>
+
+
+
+      <!-- =================================================
+           DASHBOARD
+      ================================================== -->
+
+      <section
+        id="dashboardPage"
+        class="page active-page"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <span class="eyebrow">
+              WELCOME BACK
+            </span>
+
+
+            <h1>
+              Hello,
+              <span id="dashboardName">
+                there
+              </span>
+              👋
+            </h1>
+
+
+            <p>
+              আপনার খাবার ও nutrition-এর হিসাব সহজভাবে track করুন।
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="primary-btn"
+            onclick="showPage('scanner')"
+          >
+            📷 খাবার Scan করুন
+          </button>
+
+
+        </div>
+
+
+
+        <!-- DAILY STATS -->
+
+        <div class="stats-grid">
+
+
+          <!-- CALORIES -->
+
+          <div class="stat-card">
+
+            <div class="stat-icon calories">
+              🔥
+            </div>
+
+
+            <div>
+
+              <span>
+                আজকের Calories
+              </span>
+
+
+              <strong id="todayCalories">
+                0
+              </strong>
+
+
+              <small>
+                kcal
+              </small>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- PROTEIN -->
+
+          <div class="stat-card">
+
+            <div class="stat-icon protein">
+              🥩
+            </div>
+
+
+            <div>
+
+              <span>
+                Protein
+              </span>
+
+
+              <strong id="todayProtein">
+                0
+              </strong>
+
+
+              <small>
+                g
+              </small>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- CARBS -->
+
+          <div class="stat-card">
+
+            <div class="stat-icon carbs">
+              🌾
+            </div>
+
+
+            <div>
+
+              <span>
+                Carbs
+              </span>
+
+
+              <strong id="todayCarbs">
+                0
+              </strong>
+
+
+              <small>
+                g
+              </small>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- FAT -->
+
+          <div class="stat-card">
+
+            <div class="stat-icon fat">
+              🥑
+            </div>
+
+
+            <div>
+
+              <span>
+                Fat
+              </span>
+
+
+              <strong id="todayFat">
+                0
+              </strong>
+
+
+              <small>
+                g
+              </small>
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- DASHBOARD GRID -->
+
+        <div class="dashboard-grid">
+
+
+          <!-- CALORIE PROGRESS -->
+
+          <div class="panel calorie-panel">
+
+
+            <div class="panel-heading">
+
+
+              <div>
+
+                <span class="eyebrow">
+                  DAILY TARGET
+                </span>
+
+
+                <h2>
+                  আজকের Calorie Progress
+                </h2>
+
+              </div>
+
+
+              <span
+                id="goalBadge"
+                class="badge"
+              >
+                Maintain
+              </span>
+
+
+            </div>
+
+
+
+            <div class="calorie-progress">
+
+
+              <div
+                id="calorieCircle"
+                class="calorie-circle"
+              >
+
+                <div>
+
+                  <strong id="circleCalories">
+                    0
+                  </strong>
+
+
+                  <span>
+                    /
+                    <span id="targetCalories">
+                      2000
+                    </span>
+                  </span>
+
+
+                  <small>
+                    kcal
+                  </small>
+
+                </div>
+
+              </div>
+
+
+            </div>
+
+
+            <p
+              id="calorieMessage"
+              class="progress-message"
+            >
+              আপনার খাবার scan করে আজকের intake track করুন।
+            </p>
+
+
+          </div>
+
+
+
+          <!-- HEALTH OVERVIEW -->
+
+          <div class="panel profile-summary">
+
+
+            <div class="panel-heading">
+
+
+              <div>
+
+                <span class="eyebrow">
+                  YOUR PROFILE
+                </span>
+
+
+                <h2>
+                  Health Overview
+                </h2>
+
+              </div>
+
+
+              <button
+                type="button"
+                class="text-btn"
+                onclick="showPage('health')"
+              >
+                Edit
+              </button>
+
+
+            </div>
+
+
+
+            <div class="health-overview">
+
+
+              <div class="health-row">
+
+                <span>
+                  বয়স
+                </span>
+
+                <strong id="summaryAge">
+                  —
+                </strong>
+
+              </div>
+
+
+
+              <div class="health-row">
+
+                <span>
+                  Height
+                </span>
+
+                <strong id="summaryHeight">
+                  —
+                </strong>
+
+              </div>
+
+
+
+              <div class="health-row">
+
+                <span>
+                  Weight
+                </span>
+
+                <strong id="summaryWeight">
+                  —
+                </strong>
+
+              </div>
+
+
+
+              <div class="health-row">
+
+                <span>
+                  BMI
+                </span>
+
+                <strong id="summaryBMI">
+                  —
+                </strong>
+
+              </div>
+
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- RECENT FOOD -->
+
+        <div class="panel">
+
+
+          <div class="panel-heading">
+
+
+            <div>
+
+              <span class="eyebrow">
+                RECENT ACTIVITY
+              </span>
+
+
+              <h2>
+                সাম্প্রতিক খাবার
+              </h2>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="text-btn"
+              onclick="showPage('history')"
+            >
+              সব দেখুন
+            </button>
+
+
+          </div>
+
+
+          <div
+            id="recentFoodList"
+            class="food-list"
+          ></div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           FOOD SCANNER
+      ================================================== -->
+
+      <section
+        id="scannerPage"
+        class="page"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <span class="eyebrow">
+              AI FOOD ANALYSIS
+            </span>
+
+
+            <h1>
+              আপনার খাবার Scan করুন
+            </h1>
+
+
+            <p>
+              খাবারের ছবি দিন এবং AI দিয়ে আনুমানিক nutrition information দেখুন।
+            </p>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="scanner-layout">
+
+
+          <!-- UPLOAD PANEL -->
+
+          <div class="panel scanner-panel">
+
+
+            <!-- AI SCAN STATUS -->
+
+            <div
+              id="aiScanStatus"
+              class="ai-scan-status"
+              aria-live="polite"
+            >
+              AI scan status loading...
+            </div>
+
+
+
+            <!-- UPLOAD -->
+
+            <div
+              id="uploadBox"
+              class="upload-box"
+            >
+
+
+              <div class="upload-icon">
+                📷
+              </div>
+
+
+              <h2>
+                খাবারের ছবি দিন
+              </h2>
+
+
+              <p>
+                আপনার meal-এর একটি পরিষ্কার ছবি নির্বাচন করুন।
+              </p>
+
+
+              <label class="upload-btn">
+
+                📁 ছবি নির্বাচন করুন
+
+
+                <input
+                  type="file"
+                  id="foodImage"
+                  accept="image/jpeg,image/png,image/webp,image/*"
+                  onchange="previewFoodImage(event)"
+                  hidden
+                >
+
+              </label>
+
+
+              <span class="upload-note">
+                JPG, PNG অথবা WEBP · সর্বোচ্চ 10 MB
+              </span>
+
+
+            </div>
+
+
+
+            <!-- IMAGE PREVIEW -->
+
+            <div
+              id="imagePreviewContainer"
+              class="image-preview-container hidden"
+            >
+
+
+              <img
+                id="foodPreview"
+                src=""
+                alt="খাবারের preview"
+              >
+
+
+              <button
+                type="button"
+                class="remove-image-btn"
+                onclick="removeFoodImage()"
+                aria-label="Remove image"
+              >
+                ×
+              </button>
+
+
+            </div>
+
+
+
+            <!-- ANALYZE -->
+
+            <button
+              type="button"
+              id="analyzeBtn"
+              class="primary-btn analyze-btn hidden"
+              onclick="analyzeFood()"
+            >
+              ✨ AI দিয়ে বিশ্লেষণ করুন
+            </button>
+
+
+          </div>
+
+
+
+          <!-- RESULT -->
+
+          <div
+            id="analysisResult"
+            class="panel result-panel"
+          >
+
+
+            <div class="empty-result">
+
+
+              <div>
+                🥘
+              </div>
+
+
+              <h2>
+                Nutrition Result
+              </h2>
+
+
+              <p>
+                একটি খাবারের ছবি upload করলে
+                AI analysis এখানে দেখা যাবে।
+              </p>
+
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           HEALTH PROFILE
+      ================================================== -->
+
+      <section
+        id="healthPage"
+        class="page"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <span class="eyebrow">
+              PERSONAL INFORMATION
+            </span>
+
+
+            <h1>
+              My Health
+            </h1>
+
+
+            <p>
+              আপনার তথ্য দিলে FoodLens আপনার estimated calorie target হিসাব করতে পারবে।
+            </p>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="health-layout">
+
+
+          <!-- FORM -->
+
+          <div class="panel">
+
+
+            <form
+              id="healthForm"
+              onsubmit="saveHealthProfile(event)"
+            >
+
+
+              <div class="form-grid">
+
+
+                <!-- NAME -->
+
+                <div class="form-group full">
+
+                  <label>
+                    নাম
+                  </label>
+
+
+                  <input
+                    type="text"
+                    id="profileName"
+                    placeholder="আপনার নাম"
+                    maxlength="80"
+                    autocomplete="name"
+                  >
+
+                </div>
+
+
+
+                <!-- AGE -->
+
+                <div class="form-group">
+
+                  <label>
+                    বয়স
+                  </label>
+
+
+                  <input
+                    type="number"
+                    id="profileAge"
+                    min="1"
+                    max="120"
+                    placeholder="যেমন: 20"
+                    inputmode="numeric"
+                  >
+
+                </div>
+
+
+
+                <!-- GENDER -->
+
+                <div class="form-group">
+
+                  <label>
+                    Gender
+                  </label>
+
+
+                  <select id="profileGender">
+
+
+                    <option value="">
+                      Gender নির্বাচন করুন
+                    </option>
+
+
+                    <option value="male">
+                      Male
+                    </option>
+
+
+                    <option value="female">
+                      Female
+                    </option>
+
+
+                    <option value="other">
+                      Other
+                    </option>
+
+
+                  </select>
+
+                </div>
+
+
+
+                <!-- HEIGHT -->
+
+                <div class="form-group">
+
+                  <label>
+                    Height (cm)
+                  </label>
+
+
+                  <input
+                    type="number"
+                    id="profileHeight"
+                    min="50"
+                    max="250"
+                    placeholder="যেমন: 170"
+                    inputmode="decimal"
+                  >
+
+                </div>
+
+
+
+                <!-- WEIGHT -->
+
+                <div class="form-group">
+
+                  <label>
+                    Weight (kg)
+                  </label>
+
+
+                  <input
+                    type="number"
+                    id="profileWeight"
+                    min="20"
+                    max="400"
+                    step="0.1"
+                    placeholder="যেমন: 65"
+                    inputmode="decimal"
+                  >
+
+                </div>
+
+
+
+                <!-- ACTIVITY -->
+
+                <div class="form-group full">
+
+                  <label>
+                    Activity Level
+                  </label>
+
+
+                  <select id="profileActivity">
+
+
+                    <option value="1.2">
+                      Sedentary — খুব কম exercise
+                    </option>
+
+
+                    <option value="1.375">
+                      Lightly Active — সপ্তাহে ১–৩ দিন
+                    </option>
+
+
+                    <option value="1.55">
+                      Moderately Active — সপ্তাহে ৩–৫ দিন
+                    </option>
+
+
+                    <option value="1.725">
+                      Very Active — সপ্তাহে ৬–৭ দিন
+                    </option>
+
+
+                    <option value="1.9">
+                      Extra Active
+                    </option>
+
+
+                  </select>
+
+                </div>
+
+
+              </div>
+
+
+
+              <!-- GOAL -->
+
+              <div class="goal-section">
+
+
+                <label class="section-label">
+                  আপনার Goal
+                </label>
+
+
+                <div class="goal-options">
+
+
+                  <!-- LOSE -->
+
+                  <label class="goal-card">
+
+
+                    <input
+                      type="radio"
+                      name="goal"
+                      value="lose"
+                    >
+
+
+                    <span class="goal-content">
+
+                      <strong>
+                        🔥 Lose
+                      </strong>
+
+                      <small>
+                        ওজন কমানো
+                      </small>
+
+                    </span>
+
+
+                  </label>
+
+
+
+                  <!-- MAINTAIN -->
+
+                  <label class="goal-card">
+
+
+                    <input
+                      type="radio"
+                      name="goal"
+                      value="maintain"
+                      checked
+                    >
+
+
+                    <span class="goal-content">
+
+                      <strong>
+                        ⚖️ Maintain
+                      </strong>
+
+                      <small>
+                        বর্তমান ওজন রাখা
+                      </small>
+
+                    </span>
+
+
+                  </label>
+
+
+
+                  <!-- GAIN -->
+
+                  <label class="goal-card">
+
+
+                    <input
+                      type="radio"
+                      name="goal"
+                      value="gain"
+                    >
+
+
+                    <span class="goal-content">
+
+                      <strong>
+                        💪 Gain
+                      </strong>
+
+                      <small>
+                        ওজন বাড়ানো
+                      </small>
+
+                    </span>
+
+
+                  </label>
+
+
+                </div>
+
+              </div>
+
+
+
+              <!-- SAVE -->
+
+              <button
+                type="submit"
+                class="primary-btn save-profile-btn"
+              >
+                💾 Health Profile Save করুন
+              </button>
+
+
+            </form>
+
+
+          </div>
+
+
+
+          <!-- HEALTH SUMMARY -->
+
+          <div class="panel calculation-panel">
+
+
+            <span class="eyebrow">
+              YOUR NUMBERS
+            </span>
+
+
+            <h2>
+              Health Summary
+            </h2>
+
+
+
+            <!-- BMI -->
+
+            <div class="number-card">
+
+
+              <span>
+                BMI
+              </span>
+
+
+              <strong id="healthBMI">
+                —
+              </strong>
+
+
+              <small id="bmiStatus">
+                আপনার তথ্য যোগ করুন
+              </small>
+
+
+            </div>
+
+
+
+            <!-- CALORIES -->
+
+            <div class="number-card">
+
+
+              <span>
+                Estimated Daily Calories
+              </span>
+
+
+              <strong id="healthCalories">
+                —
+              </strong>
+
+
+              <small>
+                kcal/day
+              </small>
+
+
+            </div>
+
+
+
+            <!-- DISCLAIMER -->
+
+            <div class="health-disclaimer">
+
+
+              <strong>
+                গুরুত্বপূর্ণ
+              </strong>
+
+
+              <p>
+                এগুলো আনুমানিক হিসাব।
+                এটি medical advice নয়।
+                ব্যক্তিভেদে nutritional needs আলাদা হতে পারে।
+              </p>
+
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           HISTORY
+      ================================================== -->
+
+      <section
+        id="historyPage"
+        class="page"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <span class="eyebrow">
+              YOUR DATA
+            </span>
+
+
+            <h1>
+              Scan History
+            </h1>
+
+
+            <p>
+              আপনি আগে যেসব খাবার AI দিয়ে বিশ্লেষণ করেছেন
+              সেগুলো এখানে পাবেন।
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="danger-btn"
+            onclick="clearHistory()"
+          >
+            🗑 History Clear করুন
+          </button>
+
+
+        </div>
+
+
+
+        <div class="panel">
+
+
+          <div
+            id="historyList"
+            class="history-list"
+          ></div>
+
+
+        </div>
+
+
+      </section>
+
+
+    </main>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       TOAST
+  ====================================================== -->
+
+  <div
+    id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+
+  <!-- MAIN JAVASCRIPT -->
+
+  <script src="script.js"></script>
+
+
+</body>
+</html>
